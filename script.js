@@ -2,7 +2,7 @@ let camera = { x: 0, y: 0 };
 let initTile = { x:2,y:10 };
 let showCoords = false;
 
-const defaultMaps = [];
+const defaultMaps = ["map1.1","map2","map3","map4"];
 
 const gameCanvas = document.getElementById('game-canvas');
 let gameCtx;
@@ -28,6 +28,8 @@ const its_purpose = document.getElementById('its_purpose');
 let selectedTile = null;
 let mouseX = 0, mouseY = 0;
 let smouseX = 0, smouseY = 0;
+let hoverx = 0, hovery = 0;
+
 
 const selectedStatus = document.getElementById('selected_status');
 const input_map_name = document.querySelector('#map_name');
@@ -96,6 +98,8 @@ function goInit(){
         gameCanvas.addEventListener('touchend', handleTouchEnd);
 
         gameCanvas.addEventListener('click', handleUIClick);//in game menu and profile
+        gameCanvas.addEventListener('mousemove', handleUIMouseMove);
+        //gameCanvas.addEventListener('click', handleUIClick);
 
         document.addEventListener('keydown', e => {
             //console.log('KEY',e.code);
@@ -364,6 +368,13 @@ function clearTouchKeys() {
     keys['ArrowDown'] = false;
 }
 
+function downloadMap(){
+    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(packForSave()));
+    var dlAnchorElem = document.getElementById('downloadAnchorElem');
+    dlAnchorElem.setAttribute("href",     dataStr     );
+    dlAnchorElem.setAttribute("download", currentMapName+".json");
+    dlAnchorElem.click();
+}
 
 function defaultLoad(){
     if(loadAutosave()){
@@ -1076,13 +1087,12 @@ function saveMap() {
 function loadMapByName(name){
     console.log('loading map by name ',name);
     currentMapName = name;
-    /*
     if(defaultMaps.indexOf(name) !== -1){
         fetch("maps/"+name+".json")
             .then(response => response.json())
             .then(saved => { 
                 //console.log(saved) 
-                saved.units = fixData(saved.units);
+                //saved.units = fixData(saved.units);
                 extractFromSave(saved)
                 document.getElementById('status').textContent = printPlayer(currentPlayerObj);
                 //drawGame();
@@ -1090,7 +1100,6 @@ function loadMapByName(name){
             });
         return;
     }
-    */
     const loadMapStr = localStorage.getItem(name);
     if(loadMapStr){
         const loadMapObj = JSON.parse(loadMapStr);
@@ -1129,21 +1138,23 @@ function drawGameMenu(ctx = gameCtx) {
     // Expand menu if open
     if (isGameMenuOpen) {
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
-        ctx.fillRect(x, y + size * gameScale, 80, gameMenuItems.length * 16);
+        ctx.fillRect(x*size, y * size * gameScale, 80, gameMenuItems.length * 16);
 
-        ctx.fillStyle = 'white';
         ctx.font = '10px monospace';
         gameMenuItems.forEach((item, i) => {
-            ctx.fillText(item, x + 4, y + size * gameScale + 12 + i * 16);
+            const itemY = y + size * gameScale + i * 16;
+            ctx.fillStyle = (hoveredGameMenuItem === i) ? '#00ffff' : 'white';
+            ctx.fillText(item, x + size + gameScale, y + size * gameScale + 10 + i * 16);
         });
     }
+    drawDot(ctx,hoverx,hovery)
 }
 function drawPlayerMenu(ctx = gameCtx) {
     const size = cellSize;
     const cx = gameCanvas.width/gameScale - size * 4;
     const cy = size;
 
-    console.log('gm',cx,cy, gameCanvas.width);
+    //console.log('gm',cx,cy, gameCanvas.width);
     const spriteX = currentPlayerObj?.spritex || 0;
     const spriteY = currentPlayerObj?.spritey || 0;
 
@@ -1190,12 +1201,65 @@ function drawPlayerMenu(ctx = gameCtx) {
     }
 }
 
+//hover menu
+let hoveredGameMenuItem = -1;
+let hoveredPlayerMenuItem = -1;
+
+function handleUIMouseMove(e) {
+    const rect = gameCanvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left)/gameScale;
+    const y = (e.clientY - rect.top)/gameScale;
+
+    hoveredGameMenuItem = -1;
+    hoveredPlayerMenuItem = -1;
+
+    const size = cellSize;
+
+    hoverx = x
+    hovery = y;
+    if (isGameMenuOpen) {
+
+        const startY = size * gameScale;
+        gameMenuItems.forEach((item, i) => {
+            //const itemY = y + size * gameScale + i * 16;
+            const itemY = startY + i * 16;
+            if (
+                x >= size && 
+                x <= size+80 && 
+                y >= itemY && 
+                y <= itemY + 16
+            ) {
+                hoveredGameMenuItem = i;
+            console.log(x, " > " , size, x, "< ",size+80, y , ">",itemY, "<", itemY+16);
+
+            }
+            //console.log(x, " > " , size, x, "< ",size+80, y , ">",itemY, "<", itemY+16);
+        });
+    }
+
+    if (isPlayerMenuOpen) {
+        const startX = gameCanvas.width - size - 5;
+        let yOffset = size + 12;
+        playerMenuItems.forEach((section, i) => {
+            if (
+                x >= startX - 100 && x <= startX &&
+                y >= yOffset - 10 && y <= yOffset + 10
+            ) {
+                hoveredPlayerMenuItem = i;
+            }
+            yOffset += 12 + section.items.length * 16;
+        });
+    }
+}
 function handleUIClick(e) {
     const rect = gameCanvas.getBoundingClientRect();
     const x = (e.clientX - rect.left);
     const y = (e.clientY - rect.top);
 
-    console.log(x,y);
+          let hmouseX = Math.floor((e.clientX - rect.left) / cellSize /gameScale)// *2)/2;
+          let hmouseY = Math.floor((e.clientY - rect.top) / cellSize /gameScale)// *2)/2;
+
+    console.log(x,y, hmouseX,hmouseY);
     const size = cellSize * gameScale;
 
     // Game menu (top-left)
@@ -1218,8 +1282,29 @@ function handleUIClick(e) {
         return;
     }
 
+    // Clicked inside game menu
+    if (isGameMenuOpen && hoveredGameMenuItem !== -1) {
+        const action = gameMenuItems[hoveredGameMenuItem];
+        console.log(`Game Menu: ${action}`);
+        //if (action === 'Save') saveMap();
+        //if (action === 'Load') loadMap();
+        //if (action === 'Edit') switchMode('editor');
+        isGameMenuOpen = false;
+        return;
+    }
+
+    // Clicked player menu
+    if (isPlayerMenuOpen && hoveredPlayerMenuItem !== -1) {
+        const section = playerMenuItems[hoveredPlayerMenuItem];
+        console.log(`Player Menu: ${section.label}`);
+        // You can expand to handle opening inventory views etc.
+        return;
+    }
     // Click outside closes menus
     isGameMenuOpen = false;
     isPlayerMenuOpen = false;
+    ////////////
+
+
 }
 
