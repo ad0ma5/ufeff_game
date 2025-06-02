@@ -110,6 +110,7 @@ function goInit(){
         gameCanvas.addEventListener('touchend', handleTouchEnd);
 
         gameCanvas.addEventListener('click', handleUIClick);//in game menu and profile
+        gameCanvas.addEventListener('touchstart', handleUIClickT);//in game menu and profile
         gameCanvas.addEventListener('mousemove', handleUIMouseMove);
         //gameCanvas.addEventListener('click', handleUIClick);
 
@@ -603,6 +604,7 @@ function update(dt,ctx){
         stopFlip = false;
     }
 
+
     if(x1 && y1){
         let layer = getLayerAt(x1,y1);
         if(
@@ -628,6 +630,9 @@ function update(dt,ctx){
                 //stop collision
                 return;
             }
+
+        }else{
+            return
         }
     }
     if(x2 && y2){
@@ -659,6 +664,8 @@ function update(dt,ctx){
             }
         }
         //if falling through no obsticle found so go there
+    }else{
+        return
     }
         currentPlayerObj = currentP;
 }
@@ -674,8 +681,8 @@ function checkPurpose(obj){
         keys = {};
         currentPlayerObj.x -= 0.5;
         currentPlayerObj.y -= 0.5;
-        flipTile = false;
-        flipHorizontally = false;
+        //flipTile = false;
+        //flipHorizontally = false;
         playerMoving = false;
 
         update()
@@ -699,8 +706,8 @@ function checkPurpose(obj){
         y1=y2=0;
         keys = {};
         flipTile = false;
-        flipHorizontally = false;
-        playerMoving = false;
+        //flipHorizontally = false;
+        //playerMoving = false;
         sayMsgObj = [obj, msg];
         pauseLoop = true;
 
@@ -1225,7 +1232,7 @@ function drawInventoryGrid(ctx){
 
         // Draw tooltip
         if (hoveredInventoryIndex !== -1) {
-            console.log(gameX,gameY)
+            //console.log(gameX,gameY)
             const item = playerInventory[hoveredInventoryIndex];
             if (item) {
                 const tooltipX = gameX + 10;
@@ -1377,6 +1384,10 @@ function handleUIMouseMove(e) {
     }
 }
 let gameX,gameY;
+function handleUIClickT(e){
+    console.log(e);
+    handleUIClick(e.touches[0])
+}
 function handleUIClick(e) {
     const rect = gameCanvas.getBoundingClientRect();
     const x = (e.clientX - rect.left);
@@ -1392,7 +1403,7 @@ function handleUIClick(e) {
     }
 
     const cx = gameCanvas.width - size * 4;
-    //console.log('cx',cx,'x',x, y);
+    console.log(e, 'cx',cx,'x',x, y);
     // Player menu (top-right)
     if (
         x >= cx &&
