@@ -79,9 +79,21 @@ let menuButtonSize = cellSize * gameScale;
 
 let gameMenuItems = ['Save', 'Load', 'Edit'];
 let playerMenuItems = [
-  { label: 'Inventory', items: [{ name: 'Chaos Orb', spriteX: 16, spriteY: 0, count: 200 }] },
+  { label: 'Player perks ', items: [{ name: 'Chaos Orb', spriteX: 16, spriteY: 0, count: 200 }] },
   { label: 'Stats', items: [{ name: 'Strength', value: 12 }, { name: 'Magic', value: 30 }] }
 ];
+
+let playerInventory = Array(8*4).fill(null); // 10x5 grid
+playerInventory[0] = { name: 'Chaos Orb', spriteX: 16, spriteY: 0, count: 200 };
+playerInventory[1] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
+playerInventory[2] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
+playerInventory[3] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
+playerInventory[4] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
+playerInventory[5] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
+playerInventory[6] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
+playerInventory[7] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
+playerInventory[8] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
+playerInventory[9] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
 
 const ufeffSprite = new Image();
 ufeffSprite.src = "img/ufeff_tiles_v2.png"; // Your sprite sheet path
@@ -283,7 +295,7 @@ function goInit(){
         spriteCanvas.height *=gameScale;
         spriteCtx.scale(gameScale, gameScale)
 
-        gameCanvas.width =window.innerWidth;// gridSize * cellSize;
+        gameCanvas.width =window.innerWidth-50;// gridSize * cellSize;
         gameCanvas.height =window.innerHeight-200;// gridSize * cellSize;
         gameCtx = gameCanvas.getContext('2d');
         gameCtx.scale(gameScale, gameScale)
@@ -617,7 +629,6 @@ function update(dt,ctx){
                 return;
             }
         }
-        currentPlayerObj = currentP;
     }
     if(x2 && y2){
         //console.log('p',currentP, x1,y1,x2,y2,currentPlayerObj);
@@ -648,8 +659,8 @@ function update(dt,ctx){
             }
         }
         //if falling through no obsticle found so go there
-        currentPlayerObj = currentP;
     }
+        currentPlayerObj = currentP;
 }
 function checkPurpose(obj){
     let p =  obj.p;
@@ -1132,6 +1143,9 @@ function drawGameMenu(ctx = gameCtx) {
     );
     // Draw border
     ctx.strokeStyle = 'white';
+    if (isGameMenuOpen) {
+        ctx.strokeStyle = 'green';
+    }
     ctx.lineWidth = 1;
     ctx.strokeRect(x*size, y*size, size*2, size*2);
 
@@ -1142,12 +1156,95 @@ function drawGameMenu(ctx = gameCtx) {
 
         ctx.font = '10px monospace';
         gameMenuItems.forEach((item, i) => {
-            const itemY = y + size * gameScale + i * 16;
+            //const itemY = y + size * gameScale + i * 16;
             ctx.fillStyle = (hoveredGameMenuItem === i) ? '#00ffff' : 'white';
             ctx.fillText(item, x + size + gameScale, y + size * gameScale + 10 + i * 16);
         });
     }
-    drawDot(ctx,hoverx,hovery)
+    drawDot(ctx,hoverx,hovery, 3)
+}
+let ix , iy;
+function drawInventoryGrid(ctx){
+    const size = cellSize;
+    const scale = gameScale;
+        const gridCols = 8;
+        const gridRows = 4;
+        const slotSize = size * scale + 1;
+        const menuWidth = gridCols * slotSize;
+        const menuHeight = gridRows * slotSize;
+        const menuX = ix = size * 12 * scale - menuWidth - 10;
+        const menuY = iy = size + size*2 ;
+
+        // Draw background
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(menuX, menuY, menuWidth, menuHeight);
+
+        //hoveredInventoryIndex = -1;
+
+        // Draw inventory items
+        for (let i = 0; i < gridCols*gridRows; i++) {
+            const item = playerInventory[i];
+            const col = i % gridCols;
+            const row = Math.floor(i / gridCols);
+            const itemX = menuX + col * slotSize;
+            const itemY = menuY + row * slotSize;
+
+                ctx.strokeStyle = 'white';
+                ctx.strokeRect(itemX, itemY, slotSize, slotSize);
+                drawDot(ctx, itemX,itemY,2,'blue');
+            // Highlight if hovered
+            if (hoveredInventoryIndex === i) {
+                ctx.strokeStyle = 'yellow';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(itemX, itemY, slotSize - 2, slotSize - 2);
+            }
+
+            if (item) {
+
+                ctx.drawImage(
+                    ufeffSprite,
+                    item.spriteX * size, item.spriteY * size, size, size,
+                    itemX + 2, itemY + 2, size * scale, size * scale
+                );
+
+                if (item.count > 1) {
+                    ctx.fillStyle = 'white';
+                    ctx.font = '10px monospace';
+                    ctx.fillText(`${item.count}`, itemX + 2, itemY + slotSize - 4);
+                }
+            }
+
+            // Store hover index (will be set by mousemove)
+            if (
+                mouseX >= itemX && mouseX <= itemX + slotSize &&
+                mouseY >= itemY && mouseY <= itemY + slotSize
+            ) {
+                hoveredInventoryIndex = i;
+            }
+        }
+
+        // Draw tooltip
+        if (hoveredInventoryIndex !== -1) {
+            console.log(gameX,gameY)
+            const item = playerInventory[hoveredInventoryIndex];
+            if (item) {
+                const tooltipX = gameX + 10;
+                const tooltipY = gameY + 10;
+                const text = item.name;
+                const padding = 4;
+                ctx.font = '10px monospace';
+                const textWidth = ctx.measureText(text).width;
+
+                ctx.fillStyle = 'black';
+                ctx.fillRect(tooltipX, tooltipY, textWidth + padding * 2, 16);
+                ctx.strokeStyle = 'white';
+                ctx.strokeRect(tooltipX, tooltipY, textWidth + padding * 2, 16);
+                ctx.fillStyle = 'white';
+                ctx.fillText(text, tooltipX + padding, tooltipY + 12);
+            }
+        }
+    drawDot(ctx, menuX,menuY,2,'yellow');
+    drawDot(ctx, ix,iy,2,'purple');
 }
 function drawPlayerMenu(ctx = gameCtx) {
     const size = cellSize;
@@ -1168,19 +1265,22 @@ function drawPlayerMenu(ctx = gameCtx) {
     );
     // Draw border
     ctx.strokeStyle = 'white';
+    if (isPlayerMenuOpen) {
+        ctx.strokeStyle = 'green';
+    }
     ctx.lineWidth = 1;
     ctx.strokeRect(cx, cy, size*2, size*2);
 
     if (isPlayerMenuOpen) {
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
-        ctx.fillRect(cx - 100, cy + size*2, 140, 80);
+        ctx.fillRect(cx - 50, cy + size*2, 140, 80);
 
         ctx.fillStyle = 'white';
-        ctx.font = '10px monospace';
-        let yOffset = cy + size * gameScale + 12;
+        ctx.font = '4px monospace';
+        let yOffset = cy + size * gameScale ;
 
         playerMenuItems.forEach(section => {
-            ctx.fillText(section.label + ':', cx - 96, yOffset);
+            ctx.fillText(section.label + ':', cx - 45, yOffset);
             yOffset += 12;
 
             section.items.forEach(item => {
@@ -1188,16 +1288,18 @@ function drawPlayerMenu(ctx = gameCtx) {
                     ctx.drawImage(
                         ufeffSprite,
                         item.spriteX * size, item.spriteY * size, size, size,
-                        cx - 96, yOffset - 8, size * gameScale, size * gameScale
+                        cx - 45, yOffset - 8, size * gameScale, size * gameScale
                     );
-                    ctx.fillText(`${item.name} x${item.count}`, cx - 96 + 20, yOffset + 4);
+                    ctx.fillText(`${item.name} x${item.count}`, cx - 45 + 20, yOffset + 4);
                     yOffset += 20;
                 } else {
-                    ctx.fillText(`${item.name}: ${item.value}`, cx - 96, yOffset);
+                    ctx.fillText(`${item.name}: ${item.value}`, cx - 45, yOffset);
                     yOffset += 14;
                 }
             });
+            //////////////
         });
+        drawInventoryGrid(ctx);
     }
 }
 
@@ -1205,18 +1307,21 @@ function drawPlayerMenu(ctx = gameCtx) {
 let hoveredGameMenuItem = -1;
 let hoveredPlayerMenuItem = -1;
 
+let hoveredInventoryIndex = -1;
+
 function handleUIMouseMove(e) {
     const rect = gameCanvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left)/gameScale;
-    const y = (e.clientY - rect.top)/gameScale;
+    const x = gameX = (e.clientX - rect.left)/gameScale;
+    const y = gameY = (e.clientY - rect.top)/gameScale;
 
     hoveredGameMenuItem = -1;
     hoveredPlayerMenuItem = -1;
+    hoveredInventoryIndex = -1;
 
     const size = cellSize;
 
-    hoverx = x
-    hovery = y;
+    //hoverx = x
+    //hovery = y;
     if (isGameMenuOpen) {
 
         const startY = size * gameScale;
@@ -1230,7 +1335,7 @@ function handleUIMouseMove(e) {
                 y <= itemY + 16
             ) {
                 hoveredGameMenuItem = i;
-            console.log(x, " > " , size, x, "< ",size+80, y , ">",itemY, "<", itemY+16);
+            //console.log(x, " > " , size, x, "< ",size+80, y , ">",itemY, "<", itemY+16);
 
             }
             //console.log(x, " > " , size, x, "< ",size+80, y , ">",itemY, "<", itemY+16);
@@ -1238,28 +1343,45 @@ function handleUIMouseMove(e) {
     }
 
     if (isPlayerMenuOpen) {
-        const startX = gameCanvas.width - size - 5;
-        let yOffset = size + 12;
-        playerMenuItems.forEach((section, i) => {
+        const size = cellSize;
+        const scale = gameScale;
+        const gridCols = 8;
+        const gridRows = 4;
+        const slotSize = size * scale + 1;
+        const menuX = ix;
+        const menuY = iy;
+   
+        for (let i = 0; i < gridCols*gridRows; i++) {
+            //const item = playerInventory[i];
+            const col = i % gridCols;
+            const row = Math.floor(i / gridCols);
+            const itemX = menuX + col * slotSize;
+            const itemY = menuY + row * slotSize;
+        //playerInventory.forEach((section, i) => {
+
+            //console.log(startX,startY, x,y,i)
             if (
-                x >= startX - 100 && x <= startX &&
-                y >= yOffset - 10 && y <= yOffset + 10
+                x > itemX  && x < itemX + slotSize &&
+                y > itemY  && y < itemY + slotSize
+                //x >= startX + (size * gameScale *i) && x <= startX + (size *gameScale *(i+1)  )  &&
+                //y >= startY + size * gameScale *i  && y <= startY + size *gameScale *(i +i)
             ) {
-                hoveredPlayerMenuItem = i;
+                hoveredInventoryIndex = i;
+            //console.log('AAAAAAAAa',i, gameScale)
+            //console.log('AAAAAAAAa',startX,startY, x,y,i)
+
+
             }
-            yOffset += 12 + section.items.length * 16;
-        });
+            //yOffset += 12 + section.items.length * 16;
+        };
     }
 }
+let gameX,gameY;
 function handleUIClick(e) {
     const rect = gameCanvas.getBoundingClientRect();
     const x = (e.clientX - rect.left);
-    const y = (e.clientY - rect.top);
+    const y =(e.clientY - rect.top);
 
-          let hmouseX = Math.floor((e.clientX - rect.left) / cellSize /gameScale)// *2)/2;
-          let hmouseY = Math.floor((e.clientY - rect.top) / cellSize /gameScale)// *2)/2;
-
-    console.log(x,y, hmouseX,hmouseY);
     const size = cellSize * gameScale;
 
     // Game menu (top-left)
@@ -1270,7 +1392,7 @@ function handleUIClick(e) {
     }
 
     const cx = gameCanvas.width - size * 4;
-    console.log('cx',cx,'x',x, y);
+    //console.log('cx',cx,'x',x, y);
     // Player menu (top-right)
     if (
         x >= cx &&
@@ -1286,17 +1408,19 @@ function handleUIClick(e) {
     if (isGameMenuOpen && hoveredGameMenuItem !== -1) {
         const action = gameMenuItems[hoveredGameMenuItem];
         console.log(`Game Menu: ${action}`);
-        //if (action === 'Save') saveMap();
-        //if (action === 'Load') loadMap();
-        //if (action === 'Edit') switchMode('editor');
+
+        if (action === 'Save') autosave();
+        if (action === 'Load') loadAutosave();
+        if (action === 'Edit') switchMode('editor');
         isGameMenuOpen = false;
         return;
     }
 
     // Clicked player menu
     if (isPlayerMenuOpen && hoveredPlayerMenuItem !== -1) {
-        const section = playerMenuItems[hoveredPlayerMenuItem];
-        console.log(`Player Menu: ${section.label}`);
+        //const section = playerMenuItems[hoveredPlayerMenuItem];
+        const item = playerInventory[hoveredPlayerMenuItem]
+        console.log(`Player Menu: ${item.name}`);
         // You can expand to handle opening inventory views etc.
         return;
     }
