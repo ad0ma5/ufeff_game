@@ -1,3 +1,7 @@
+import Game from "./model.js";
+const game = new Game();
+
+console.log(Game,game, game.test);
 let camera = { x: 0, y: 0 };
 let initTile = { x:2,y:10 };
 let showCoords = false;
@@ -149,7 +153,8 @@ function goInit(){
             code === 'ArrowDown'
             ) {
                 pauseLoop = false;
-                sayMsgObj = [];
+                if(sayMsgObj.length)
+                    sayMsgObj = [];
                 playerMoving = true;
                 //if(editorCanvas.focus)
                 e.preventDefault();
@@ -168,6 +173,8 @@ function goInit(){
             if(code === "KeyD") code = "ArrowRight";
             keys[code] = false;
 
+            pauseLoop = false;
+            //sayMsgObj = []; //if uncommented hides msg 
             playerMoving = false;
             //drawEditor();
         });
@@ -392,6 +399,8 @@ function handleTouchStart(e) {
         }
     }
 
+    pauseLoop = false;
+    sayMsgObj = [];
     playerMoving = true;
 }
 
@@ -740,8 +749,8 @@ function checkPurpose(obj){
         keys = {};
         flipTile = false;
         //flipHorizontally = false;
-        //playerMoving = false;
-        sayMsgObj = [obj, msg];
+        playerMoving = false;
+       sayMsgObj = [obj, msg];
         pauseLoop = true;
 
         return true;
@@ -1528,7 +1537,7 @@ function drawCharacterSelectScreen(dt) {
     const startY = 60;
     const cols = 5;
 
-    lcharAreas = [];
+    let lcharAreas = [];
 
     characters.forEach((char, i) => {
         const x = startX + (i % cols) * (size * scale + gap);
@@ -1555,7 +1564,7 @@ gameCanvas.addEventListener('click', e => {
     const x = (e.clientX - rect.left)/ gameScale ;
     const y = (e.clientY - rect.top)/ gameScale ;
 
-    console.log(x,y, btnAreas)
+    console.log(x,y, charAreas)
     if (mode === 'load') {
         btnAreas.forEach(btn => {
             if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
@@ -1581,4 +1590,28 @@ gameCanvas.addEventListener('click', e => {
         });
     }
 });
+
+function startNewGameWithCharacter(char) {
+    // Reset state
+    currentMapName = 'map1.1';
+    clearMap();
+
+    // Add player unit
+    const newPlayer = {
+        ...char,
+        x: 1,
+        y: 1,
+        is_player: 1,
+        size: 2,
+        o: false,
+        p: "player"
+    };
+    currentPlayerObj = newPlayer;
+    //gameUnits.push(newPlayer);
+
+    // Load map1.1 (if stored locally)
+    loadMapByName('map1.1');
+
+                    switchMode('game')
+}
 
