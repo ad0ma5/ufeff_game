@@ -59,7 +59,7 @@ let gameUnits = [];
 let gameMapLayer = [];
 let mapList = [];
 //let mode = 'game';
-let mode = 'editor';
+let mode = 'load';
 let turnCount = 0;
 let currentMapName = '';
 let playerMoving = false;
@@ -85,16 +85,24 @@ let playerMenuItems = [
 
 let playerInventory = Array(8*4).fill(null); // 10x5 grid
 playerInventory[0] = { name: 'Chaos Orb', spriteX: 16, spriteY: 0, count: 200 };
-playerInventory[1] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
-playerInventory[2] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
-playerInventory[3] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
-playerInventory[4] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
-playerInventory[5] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
-playerInventory[6] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
-playerInventory[7] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
-playerInventory[8] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
-playerInventory[9] = { name: 'Mana Potion', spriteX: 17, spriteY: 0, count: 5 };
+playerInventory[1] = { name: 'Mana Potion', spriteX: 18, spriteY: 0, count: 15 };
+playerInventory[2] = { name: 'Mana Jana', spriteX: 22, spriteY: 0, count: 5 };
+playerInventory[3] = { name: 'Mana Dicvision', spriteX: 24, spriteY: 0, count: 65 };
+playerInventory[4] = { name: 'Mana Pollocks', spriteX: 20, spriteY: 0, count: 35 };
+playerInventory[5] = { name: 'Mana Peace', spriteX: 16, spriteY: 2, count: 51 };
+playerInventory[6] = { name: 'Mana Bugana', spriteX: 18, spriteY: 2, count: 356 };
+playerInventory[7] = { name: 'Mana Banana', spriteX: 20, spriteY: 2, count: 45 };
+playerInventory[8] = { name: 'Mana Pot', spriteX: 22, spriteY: 2, count: 53 };
+playerInventory[9] = { name: 'Mana Lotiom', spriteX: 24, spriteY: 2, count: 5 };
+///////////////////////// start game maybe extract outside as only needed once at the start
+let selectedCharacterIndex = null;
 
+const characters = Array.from({ length: 10 }, (_, i) => ({
+    name: `Hero ${i + 1}`,
+    spritex:    i < 5 ? 0 : 8,
+    spritey:  i * 2 % 10 
+}));
+/////////////////
 const ufeffSprite = new Image();
 ufeffSprite.src = "img/ufeff_tiles_v2.png"; // Your sprite sheet path
 
@@ -115,13 +123,30 @@ function goInit(){
         //gameCanvas.addEventListener('click', handleUIClick);
 
         document.addEventListener('keydown', e => {
-            //console.log('KEY',e.code);
-          keys[e.code] = true;
+            console.log('KEY',e.code);
+            let code = e.code;
+            if (code === 'KeyS' && keys["ControlLeft"]) {
+                autosave();
+                return;
+            }
+            if(code === "KeyI"){
+                isPlayerMenuOpen = !isPlayerMenuOpen;
+                return;
+            }
+            if(code === "KeyM"){
+                isGameMenuOpen = !isGameMenuOpen;
+                return;
+            }
+            if(code === "KeyW") code = "ArrowUp";
+            if(code === "KeyS") code = "ArrowDown";
+            if(code === "KeyA") code = "ArrowLeft";
+            if(code === "KeyD") code = "ArrowRight";
+          keys[code] = true;
           if (
-            e.code === 'ArrowLeft' ||
-            e.code === 'ArrowRight' ||
-            e.code === 'ArrowUp' ||
-            e.code === 'ArrowDown'
+            code === 'ArrowLeft' ||
+            code === 'ArrowRight' ||
+            code === 'ArrowUp' ||
+            code === 'ArrowDown'
             ) {
                 pauseLoop = false;
                 sayMsgObj = [];
@@ -129,17 +154,19 @@ function goInit(){
                 //if(editorCanvas.focus)
                 e.preventDefault();
             }
-          if (e.code === 'KeyS') {
-                autosave();
-            }
-          if (e.code === 'KeyR') {
+          if (code === 'KeyR') {
           }else{
             //e.preventDefault();
           }
             //drawEditor();
         });
         document.addEventListener('keyup', e => {
-            keys[e.code] = false;
+            let code = e.code;
+            if(code === "KeyW") code = "ArrowUp";
+            if(code === "KeyS") code = "ArrowDown";
+            if(code === "KeyA") code = "ArrowLeft";
+            if(code === "KeyD") code = "ArrowRight";
+            keys[code] = false;
 
             playerMoving = false;
             //drawEditor();
@@ -309,11 +336,13 @@ function goInit(){
         //gameCtx.strokeStyle = 'black';
         editorCtx.scale(gameScale, gameScale)
         clearMap();
-        if(loadAutosave()){
-            console.log('loaded autosave');
-        }
+        
+        //if(loadAutosave()){
+          //  console.log('loaded autosave');
+        //}
+
         //switchMode('editor');
-        switchMode('game');
+        switchMode('load');
         //defaultLoad();
         // Initialize
         //switchMode('gamesingle');
@@ -481,7 +510,7 @@ function toggleSprites(){
         spriteCanvas.style.display = 'none';
 }
 
-let doLoop = null;
+let doLoop = function(){};
 function theLoop(dt){
     //console.log('ooping', doLoop)
     if(!pauseLoop)
@@ -491,11 +520,15 @@ function theLoop(dt){
 
 function switchMode(newMode) {
     mode = newMode;
-    document.getElementById('game-container').classList.toggle('active', mode === 'game' || mode === "gamesingle");
+    document.getElementById('game-container').classList.toggle('active', mode === 'game' || mode === "gamesingle" || mode === "load" || mode === "charSelect");
     document.body.classList.toggle('active', mode === 'game' || mode === "gamesingle");
     document.getElementById('editor-container').classList.toggle('active', mode === 'editor');
-    if (mode === 'game') {
 
+    if (mode === 'load'){
+        doLoop = drawLoadScreen;
+    } else if (mode === 'charSelect'){
+        doLoop = drawCharacterSelectScreen;
+    } else if (mode === 'game') {
         gameLoopStarted =true;
         editorLoopStarted = false;
         doLoop = drawGame;
@@ -1197,8 +1230,9 @@ function drawInventoryGrid(ctx){
             const itemY = menuY + row * slotSize;
 
                 ctx.strokeStyle = 'white';
+                ctx.lineWidth = 1;
                 ctx.strokeRect(itemX, itemY, slotSize, slotSize);
-                drawDot(ctx, itemX,itemY,2,'blue');
+                drawDot(ctx, itemX,itemY,1,'blue');
             // Highlight if hovered
             if (hoveredInventoryIndex === i) {
                 ctx.strokeStyle = 'yellow';
@@ -1210,13 +1244,13 @@ function drawInventoryGrid(ctx){
 
                 ctx.drawImage(
                     ufeffSprite,
-                    item.spriteX * size, item.spriteY * size, size, size,
-                    itemX + 2, itemY + 2, size * scale, size * scale
+                    item.spriteX * size , item.spriteY * size, size*2, size*2,
+                    itemX + 4, itemY + 2, size * scale- 6, size * scale -6 
                 );
 
                 if (item.count > 1) {
-                    ctx.fillStyle = 'white';
-                    ctx.font = '10px monospace';
+                    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                    ctx.font = '5px monospace';
                     ctx.fillText(`${item.count}`, itemX + 2, itemY + slotSize - 4);
                 }
             }
@@ -1442,4 +1476,109 @@ function handleUIClick(e) {
 
 
 }
+
+////////////////////////////////
+function drawLoadScreen(dt) {
+    const ctx = gameCtx
+    console.log('drawLoadScreen');
+    ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+    ctx.fillStyle = 'white';
+    ctx.font = '10px monospace';
+    ctx.fillText('My RPG Game', 50, 60);
+
+    const buttons = [
+        { label: 'Continue', action: 'continue' },
+        { label: 'Load Map', action: 'loadmap' },
+        { label: 'New Game', action: 'newgame' },
+    ];
+
+    let localBtnAreas = [];
+    buttons.forEach((btn, i) => {
+        const x = 50;
+        const y = 100 + i * 20;
+        const w = 200;
+        const h = 20;
+        ctx.fillStyle = '#333';
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = 'white';
+        ctx.strokeRect(x, y, w, h);
+        ctx.fillStyle = 'white';
+        ctx.fillText(btn.label, x + 4, y + 14);
+        localBtnAreas.push({ x, y, w, h, action: btn.action });
+    });
+    if (!btnAreas.length) btnAreas = localBtnAreas;
+}
+function drawCharacterSelectScreen(dt) {
+    const ctx = gameCtx
+    //ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+    ctx.fillStyle = 'white';
+    ctx.font = '6px monospace';
+    ctx.fillText('Choose Your Character', 50, 40);
+
+    const size = cellSize;
+    const scale = gameScale;
+    const gap = 10;
+    const startX = 50;
+    const startY = 60;
+    const cols = 5;
+
+    lcharAreas = [];
+
+    characters.forEach((char, i) => {
+        const x = startX + (i % cols) * (size * scale + gap);
+        const y = startY + Math.floor(i / cols) * (size * scale + gap);
+        ctx.fillStyle = (i === selectedCharacterIndex) ? '#0f0' : '#444';
+        ctx.fillRect(x - 2, y - 2, size * scale + 4, size * scale + 4);
+        ctx.drawImage(
+            ufeffSprite,
+            char.spritex * size, char.spritey * size, size*2, size*2,
+            x, y, size * scale, size * scale
+        );
+        ctx.fillStyle = 'white';
+        ctx.font = '4px monospace';
+        ctx.fillText(char.name, x, y + size * scale);
+        lcharAreas.push({ x, y, w: size * scale, h: size * scale, index: i });
+        if (!charAreas.length) charAreas = lcharAreas;
+    });
+}
+let btnAreas = [];
+let charAreas = [];
+
+gameCanvas.addEventListener('click', e => {
+    const rect = gameCanvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left)/ gameScale ;
+    const y = (e.clientY - rect.top)/ gameScale ;
+
+    console.log(x,y, btnAreas)
+    if (mode === 'load') {
+        btnAreas.forEach(btn => {
+            if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
+                if (btn.action === 'continue') {
+                    if (loadAutosave()) {
+                        switchMode('game')
+                        //drawGame();
+                    }
+                } else if (btn.action === 'loadmap') {
+                    loadMap();
+                } else if (btn.action === 'newgame') {
+                    switchMode('charSelect')
+                    //drawCharacterSelectScreen();
+                }
+            }
+        });
+    } else if (mode === 'charSelect') {
+        charAreas.forEach(area => {
+            if (x >= area.x && x <= area.x + area.w && y >= area.y && y <= area.y + area.h) {
+                selectedCharacterIndex = area.index;
+                startNewGameWithCharacter(characters[area.index]);
+            }
+        });
+    }
+});
 
