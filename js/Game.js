@@ -274,7 +274,7 @@ export default class Game{
             currentP.y += speed
             this.x1 = Math.round(currentP.x) ;
             this.x2 = this.x1+1;
-            this.y1 = Math.round(currentP.y+2 +offset)-1;
+            this.y1 = Math.round(currentP.y+2+0.5 +offset)-1;
             this.y2 = this.y1;
             this.playerAnimationX = 0
             this.flipTile = false;
