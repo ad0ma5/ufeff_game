@@ -285,14 +285,14 @@ export default class View{
 
         // Expand menu if open
         if (game.isGameMenuOpen) {
-            ctx.fillStyle = 'rgba(0,0,0,0.8)';
-            ctx.fillRect(x*size, y * size * game.gameScale, 80, game.gameMenuItems.length * 16);
+            ctx.fillStyle = 'rgba(0,230,0,0.8)';
+            ctx.fillRect(x*size, (y+0.5) * size * game.gameScale, 80, game.gameMenuItems.length * 16);
 
             ctx.font = '10px monospace';
             game.gameMenuItems.forEach((item, i) => {
                 //const itemY = y + size * game.gameScale + i * 16;
-                ctx.fillStyle = (this.hoveredGameMenuItem === i) ? '#00ffff' : 'white';
-                ctx.fillText(item, x + size + game.gameScale, y + size * game.gameScale + 10 + i * 16);
+                ctx.fillStyle = (game.hoveredGameMenuItem === i) ? 'black' : 'white';
+                ctx.fillText(item, x + size + game.gameScale, (y+0.5) * size * game.gameScale + 10 + i * 16);
             });
         }
         this.drawDot(ctx,game.hoverx,game.hovery, 3)
@@ -329,12 +329,14 @@ export default class View{
         ctx.strokeRect(cx, cy, size*2, size*2);
 
         if (game.isPlayerMenuOpen) {
-            ctx.fillStyle = 'rgba(0,0,0,0.8)';
-            ctx.fillRect(cx - 50, cy + size*2, 140, 80);
+            //ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillStyle = 'rgba(0,230,0,0.8)';
+            ctx.fillRect(cx - 50, cy + size* game.gameScale, 140, 80);
 
-            ctx.fillStyle = 'white';
+            //ctx.fillStyle = 'white';
+            ctx.fillStyle = 'black';
             ctx.font = '4px monospace';
-            let yOffset = cy + size * game.gameScale ;
+            let yOffset = cy+10 + size* game.gameScale 
 
             game.playerMenuItems.forEach(section => {
                 ctx.fillText(section.label + ':', cx - 45, yOffset);
@@ -345,7 +347,7 @@ export default class View{
                         ctx.drawImage(
                             this.ufeffSprite,
                             item.spriteX * size, item.spriteY * size, size, size,
-                            cx - 45, yOffset - 8, size * game.gameScale, size * game.gameScale
+                            cx - 45, yOffset - 8, cy+size * game.gameScale, size * game.gameScale
                         );
                         ctx.fillText(`${item.name} x${item.count}`, cx - 45 + 20, yOffset + 4);
                         yOffset += 20;
