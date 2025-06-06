@@ -196,7 +196,7 @@ export default class Game{
                 savedMaps.push(this.defaultMaps[i]);
             }
         }
-        printSavedMap(savedMaps);
+        view.printSavedMap(savedMaps);
         return
     }
     update(dt,ctx){

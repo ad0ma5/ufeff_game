@@ -49,8 +49,8 @@ export default class View{
         }
 
         if(is_info.checked){
-            drawDot(view.editorCtx, x1*game.cellSize, y1*game.cellSize);
-            drawDot(view.editorCtx, x2*game.cellSize, y2*game.cellSize);
+            this.drawDot(view.editorCtx, game.x1*game.cellSize, game.y1*game.cellSize);
+            this.drawDot(view.editorCtx, game.x2*game.cellSize, game.y2*game.cellSize);
         }
         //console.log('drawUnits draw');
         // Preview selected tile under mouse
@@ -60,7 +60,7 @@ export default class View{
 
         if (game.selectedTile) {
             view.editorCtx.drawImage(
-                ufeffSprite,
+                this.ufeffSprite,
                 game.selectedTile.x * game.cellSize, game.selectedTile.y * game.cellSize, cellS, cellS,
                 game.mouseX * game.cellSize, game.mouseY * game.cellSize, cellS, cellS
             );
@@ -68,7 +68,7 @@ export default class View{
 
         view.spriteCtx.clearRect(0, 0, spriteCanvas.width, spriteCanvas.height);
 
-        view.spriteCtx.drawImage(ufeffSprite, 0, 0);
+        view.spriteCtx.drawImage(this.ufeffSprite, 0, 0);
         view.spriteCtx.strokeStyle = 'red';
         view.spriteCtx.lineWidth = 2;
         view.spriteCtx.strokeRect( (game.smouseX * game.cellSize), (game.smouseY * game.cellSize), cellS, cellS);
@@ -417,7 +417,7 @@ export default class View{
 
                     const cellS = tile.size === 2 ? game.cellSize : game.cellSize;
                     ctx.drawImage(
-                        ufeffSprite,
+                        this.ufeffSprite,
                         tile.x * game.cellSize, tile.y * game.cellSize, cellS, cellS,
                         //x * game.cellSize- game.camera.x, y * game.cellSize- game.camera.y,
                         x * game.cellSize, y * game.cellSize,
@@ -557,5 +557,72 @@ export default class View{
         });
         drawCanvasInput(ctx, dt);
     }
-}
+///////////editor
+//
+ 
+    drawLayer(ctx){
+        //check if currently drawing selected unit
+        for(let i = 0; i < game.gameMapLayer.length; i++){
+            let tile = game.gameMapLayer[i];
 
+            const cellS = tile.size === 2 ? game.cellSize *2: game.cellSize;
+            //console.log('draw layer', tile);
+            ctx.drawImage(
+                this.ufeffSprite,
+                tile.spritex * game.cellSize, tile.spritey * game.cellSize, cellS, cellS,
+                tile.x * game.cellSize, tile.y * game.cellSize,
+                cellS, cellS
+            );
+            if( game.showCoords || tile.o === true && !!is_info.checked){
+                //console.log('draw layer', tile);
+                ctx.fillStyle = 'white';
+                ctx.font = '3px monospace';
+                ctx.fillText(`${tile.x},${tile.y}`, tile.x * game.cellSize , tile.y * game.cellSize+4);
+
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 1;
+                ctx.strokeRect( (tile.x * game.cellSize), (tile.y * game.cellSize), cellS, cellS);
+
+            }
+        }
+    }
+    drawUnits(ctx){
+        //check if currently drawing selected unit
+        for(let i = 0; i < game.gameUnits.length; i++){
+            let unit = game.gameUnits[i];
+
+            this.drawSingleUnit(ctx, unit);
+        }
+        this.drawSingleUnit(ctx, game.currentPlayerObj);
+        //debug frame by frame
+        if (game.selectedUnit) {
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.strokeRect( (game.selectedUnit.x * game.cellSize), (game.selectedUnit.y * game.cellSize), game.cellSize-2, game.cellSize-2);
+            ctx.strokeStyle = 'black';
+
+        }
+
+        if(view.is_info.checked){
+            const cellS = game.currentPlayerObj?.size === 2 ? game.cellSize *2: game.cellSize;
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 1;
+            ctx.strokeRect( (game.currentPlayerObj.x * game.cellSize), (game.currentPlayerObj.y * game.cellSize), cellS, cellS);
+
+            ctx.strokeStyle = 'green';
+            ctx.lineWidth = 1;
+            ctx.strokeRect( (game.currentPlayerObj.x * game.cellSize), (game.currentPlayerObj.y * game.cellSize), game.cellSize, game.cellSize);
+            this.drawDot(ctx, game.currentPlayerObj.x * game.cellSize,game.currentPlayerObj.y * game.cellSize);
+        }
+
+        //noDraw = false;
+    }
+ 
+    printSavedMap(maps){
+        let list = `<p onclick="this.parentNode.innerHTML = ''">close</p><p class="d" onclick="this.parentNode.innerHTML=''">&times;</p><br />`;
+        for(let i = 0; i<maps.length; i++){
+            list += `<p onclick="game.loadMapByName('${maps[i]}')">${maps[i]} </p><p class="d" onclick="deleteMap('${maps[i]}')">del</p><br />`;
+        }
+        this.map_menu.innerHTML = list;
+    }
+}

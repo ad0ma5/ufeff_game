@@ -253,8 +253,8 @@ function goInit(){
         //  console.log('loaded autosave');
         //}
 
-        //switchMode('editor');
-        game.switchMode('load');
+        game.switchMode('editor');
+        //game.switchMode('load');
         //defaultLoad();
         // Initialize
         //switchMode('gamesingle');
@@ -359,13 +359,6 @@ function autosave(){
     localStorage.setItem('autosaveUfeff', JSON.stringify(game.forSave()));
     console.log('autosaved');
 }
-function printSavedMap(maps){
-    let list = `<p onclick="this.parentNode.innerHTML = ''">close</p><p class="d" onclick="this.parentNode.innerHTML=''">&times;</p><br />`;
-    for(let i = 0; i<maps.length; i++){
-        list += `<p onclick="loadMapByName('${maps[i]}')">${maps[i]} </p><p class="d" onclick="deleteMap('${maps[i]}')">del</p><br />`;
-    }
-    map_menu.innerHTML = list;
-}
 window.toggleMenu = () => {
     if(menu.style.display === 'none')
         menu.style.display = 'inline-block';
@@ -398,63 +391,6 @@ function theLoop(dt){
 
 
 
-function drawLayer(ctx){
-    //check if currently drawing selected unit
-    for(let i = 0; i < game.gameMapLayer.length; i++){
-        let tile = game.gameMapLayer[i];
-
-        const cellS = tile.size === 2 ? game.cellSize *2: game.cellSize;
-        //console.log('draw layer', tile);
-        ctx.drawImage(
-            ufeffSprite,
-            tile.spritex * game.cellSize, tile.spritey * game.cellSize, cellS, cellS,
-            tile.x * game.cellSize, tile.y * game.cellSize,
-            cellS, cellS
-        );
-        if( game.showCoords || tile.o === true && !!is_info.checked){
-            //console.log('draw layer', tile);
-            ctx.fillStyle = 'white';
-            ctx.font = '3px monospace';
-            ctx.fillText(`${tile.x},${tile.y}`, tile.x * game.cellSize , tile.y * game.cellSize+4);
-
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 1;
-            ctx.strokeRect( (tile.x * game.cellSize), (tile.y * game.cellSize), cellS, cellS);
-
-        }
-    }
-}
-function drawUnits(ctx){
-    //check if currently drawing selected unit
-    for(let i = 0; i < game.gameUnits.length; i++){
-        let unit = game.gameUnits[i];
-
-        drawSingleUnit(ctx, unit);
-    }
-    drawSingleUnit(ctx, game.currentPlayerObj);
-    //debug frame by frame
-    if (game.selectedUnit) {
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 2;
-        ctx.strokeRect( (game.selectedUnit.x * game.cellSize), (game.selectedUnit.y * game.cellSize), game.cellSize-2, game.cellSize-2);
-        ctx.strokeStyle = 'black';
-
-    }
-
-    if(view.is_info.checked){
-        const cellS = game.currentPlayerObj?.size === 2 ? game.cellSize *2: game.cellSize;
-        ctx.strokeStyle = 'red';
-        ctx.lineWidth = 1;
-        ctx.strokeRect( (game.currentPlayerObj.x * game.cellSize), (game.currentPlayerObj.y * game.cellSize), cellS, cellS);
-
-        ctx.strokeStyle = 'green';
-        ctx.lineWidth = 1;
-        ctx.strokeRect( (game.currentPlayerObj.x * game.cellSize), (game.currentPlayerObj.y * game.cellSize), game.cellSize, game.cellSize);
-        drawDot(ctx, game.currentPlayerObj.x * game.cellSize,game.currentPlayerObj.y * game.cellSize);
-    }
-
-    //noDraw = false;
-}
 function handleUIMouseMove(e) {
     const rect = view.gameCanvas.getBoundingClientRect();
     const x = game.gameX = (e.clientX - rect.left)/game.gameScale;

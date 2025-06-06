@@ -225,11 +225,11 @@
             <button class="show" onclick="toggleControls()">menu</button>
             <button class="show_sprites" onclick="toggleSprites()">sprites</button>
             <div id="editor-controls">
-                <input type="text" id="map_name" name="map_name" onchange="currentMapName=this.value" placeholder="Map name" /><br />
-                <button onclick="saveMap()">Save Map</button>
-                <button onclick="clearMap()">Clear Map</button>
-                <button onclick="clearUnits()">Clear units</button>
-                <button onclick="downloadMap()">Download Map</button>
+                <input type="text" id="map_name" name="map_name" onchange="game.currentMapName=this.value" placeholder="Map name" /><br />
+                <button onclick="game.saveMap()">Save Map</button>
+                <button onclick="game.clearMap()">Clear Map</button>
+                <button onclick="game.clearUnits()">Clear units</button>
+                <button onclick="game.downloadMap()">Download Map</button>
                 <br />
                 <input type="file" name="file" onchange="readText(event)" />
             </div>
@@ -237,7 +237,7 @@
             <div style="font-size: 15px;position: fixed;
     bottom: 0;
     background: sandybrown;">
-                <button onclick="selectedTile = false">unselect</button>
+                <button onclick="game.selectedTile = false">unselect</button>
                 <br />
                 <input type="checkbox" id="is_unit" />unit (not tile);
                 <input type="checkbox" id="is_layer" />2nd layer ( tile);
@@ -254,7 +254,7 @@
                 <br />
                 <div id="selected_id"></div> <textarea id="selected_json"></textarea>
             </div>
-            <canvas id="spriteCanvas" width="256" height="272" style="    bottom: 0px;
+            <canvas id="spriteCanvas" width="256" height="272" style="  left: 0;  bottom: 0px;
     position: fixed;"></canvas>
         </div>
         <a id="downloadAnchorElem" style="display:none"></a>
