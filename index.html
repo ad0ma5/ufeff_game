@@ -236,7 +236,7 @@
             <canvas id="editor-canvas" width="1600" height="1600"></canvas>
             <div style="font-size: 15px;position: fixed;
     bottom: 0;
-    background: sandybrown;">
+    background: sandybrown; overflow:scroll;">
                 <button onclick="game.selectedTile = false">unselect</button>
                 <br />
                 <input type="checkbox" id="is_unit" />unit (not tile);
@@ -254,8 +254,8 @@
                 <br />
                 <div id="selected_id"></div> <textarea id="selected_json"></textarea>
             </div>
-            <canvas id="spriteCanvas" width="256" height="272" style="  left: 0;  bottom: 0px;
-    position: fixed;"></canvas>
+            <canvas id="spriteCanvas" width="256" height="272" style="  left: 0;  bottom: 0px; position: fixed;"></canvas>
+            <canvas id="craftCanvas" width="256" height="272" style="  left: 0;  bottom: 0px; position: fixed;"></canvas>
         </div>
         <a id="downloadAnchorElem" style="display:none"></a>
         <script type="module" src="js/config.js"></script>

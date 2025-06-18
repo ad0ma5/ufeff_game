@@ -35,7 +35,7 @@ export default class Game{
     isGameMenuOpen = false;
     isPlayerMenuOpen = false;
 
-    gameMenuItems = ['Save', 'Load', 'Edit', 'zoom 1', 'zoom 2', 'zoom 3',];
+    gameMenuItems = ['Save', 'Load', 'Edit'/*, 'zoom 1', 'zoom 2', 'zoom 3',*/];
 
     playerInventory = Array(8*4).fill(null); // 10x5 grid
     ///////////////////////// start game maybe extract outside as only needed once at the start
@@ -52,6 +52,8 @@ export default class Game{
     mouseY = 0;
     smouseX = 0; 
     smouseY = 0;
+    cmouseX = 0; 
+    cmouseY = 0;
     hoverx = 0; 
     hovery = 0;
 
@@ -156,7 +158,7 @@ export default class Game{
 
         this.switchMode('game')
     }
-
+ 
     switchMode(newMode){
         
         this.mode = newMode;
@@ -452,6 +454,13 @@ export default class Game{
         localStorage.setItem('savedMapsUfeff', JSON.stringify(savedMaps));
         //alert('Map "'+view.input_map_name.value+'" saved! ');
         return;
+    }
+    downloadMap(){
+        var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.forSave()));
+        var dlAnchorElem = document.getElementById('downloadAnchorElem');
+        dlAnchorElem.setAttribute("href",     dataStr     );
+        dlAnchorElem.setAttribute("download", game.currentMapName+".json");
+        dlAnchorElem.click();
     }
 
 };

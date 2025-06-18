@@ -1,23 +1,60 @@
+import config from "./config.js";
 import Game from "./Game.js";
 import View from "./View.js";
+window.config = config;
 window.game = new Game();
 window.view = new View();
 //game.view = view;
-console.log(game, view);
+console.log(game, view, config);
 
 let ufeffSpriteLoaded = false;
 let unitSpriteLoaded = true;//if later need more sprites
+let craftSpriteLoaded = false;
 
 /////////////////
 const ufeffSprite = new Image();
 ufeffSprite.src = "img/ufeff_tiles_v2.png"; // Your sprite sheet path
-
 ufeffSprite.onload = function () {
     ufeffSpriteLoaded = true;
-    view.ufeffSprite = ufeffSprite;
-    goInit();
-    theLoop();//starting the only one loop
+    start();
 }
+/////////
+//const animeCanvas = document.getElementById('anime-canvas');
+//const animeCtx = animeCanvas.getContext('2d');
+const craftSprite = new Image();
+craftSprite.src = "img/crafting_tables.png"; // Make sure this path is correct or serve it locally
+craftSprite.onload = function () {
+    craftSpriteLoaded = true;
+    start();
+};
+function start(){
+    if( ufeffSpriteLoaded && craftSpriteLoaded){
+        view.ufeffSprite = ufeffSprite;
+        view.craftSprite = craftSprite;
+        goInit();
+        theLoop();//starting the only one loop
+    }
+}
+
+    /*
+    setInterval(() => {
+        if(!view.gameCtx) return;
+        //view.gameCtx = view.gameCanvas.getContext('2d');
+        console.log('anime', view)
+
+    view.gameCtx.fillStyle = 'white';
+        view.gameCtx.fillRect(0, 0, view.gameCanvas.width, view.gameCanvas.height);
+        //drawGame();
+
+        const sx = (currentFrame * frameWidth);
+        const sy = (rowIndex * frameHeight);
+
+        view.gameCtx.drawImage(sprite, sx, sy, frameWidth, frameHeight, 0, 0, frameWidth/10, frameHeight/10);
+
+        currentFrame = (currentFrame + 1) % totalFrames;
+    }, animationSpeed);
+    */
+/////////
 const documentKeyDown =  e => {
     console.log('KEY',e.code);
     let code = e.code;
@@ -86,19 +123,26 @@ function goInit(){
 
         view.spriteCtx.drawImage(ufeffSprite, 0, 0);
         // --- Sprite selection ---
-        spriteCanvas.addEventListener('click', (e) => {
-            let is_double_checked = is_double.checked;
+        view.spriteCanvas.addEventListener('click', (e) => {
+            let is_double_checked = view.is_double.checked;
 
             const size = is_double_checked ? 2 : 1;
-            const rect = spriteCanvas.getBoundingClientRect();
+            const rect = view.spriteCanvas.getBoundingClientRect();
             const sx = Math.floor((e.clientX - rect.left) / game.cellSize/game.gameScale*2)/2;
             const sy = Math.floor((e.clientY - rect.top) / game.cellSize/game.gameScale*2)/2;
             console.log('selected tile',sx,sy)
             game.selectedTile = { x:sx, y:sy, size };
         });
         // --- Track mouse for preview ---
-        spriteCanvas.addEventListener('mousemove', (e) => {
-            const rect = spriteCanvas.getBoundingClientRect();
+        view.craftCanvas.addEventListener('mousemove', (e) => {
+            const rect = view.spriteCanvas.getBoundingClientRect();
+            game.cmouseX = Math.floor((e.clientX - rect.left) / game.cellSize/game.gameScale*2)/2;
+            game.cmouseY = Math.floor((e.clientY - rect.top) / game.cellSize/game.gameScale*2)/2;
+        });
+        view.craftCanvas.addEventListener('click', handleCraftClick);
+        // --- Track mouse for preview ---
+        view.spriteCanvas.addEventListener('mousemove', (e) => {
+            const rect = view.spriteCanvas.getBoundingClientRect();
             game.smouseX = Math.floor((e.clientX - rect.left) / game.cellSize/game.gameScale*2)/2;
             game.smouseY = Math.floor((e.clientY - rect.top) / game.cellSize/game.gameScale*2)/2;
         });
@@ -144,7 +188,7 @@ function goInit(){
                     }
 
                 }else{
-                    game.gameMap[game.mouseY][game.mouseX] = {x:initTile.x,y:initTile.y};
+                    game.gameMap[game.mouseY][game.mouseX] = {x:game.initTile.x,y:game.initTile.y};
                 }
 
             }else if(is_unit_checked ){
@@ -253,8 +297,9 @@ function goInit(){
         //  console.log('loaded autosave');
         //}
 
-        game.switchMode('editor');
-        //game.switchMode('load');
+        //game.switchMode('editor');
+        game.switchMode('load');
+        //game.switchMode('game_nice');
         //defaultLoad();
         // Initialize
         //switchMode('gamesingle');
@@ -324,25 +369,19 @@ function clearTouchKeys() {
     game.keys['ArrowDown'] = false;
 }
 
-function downloadMap(){
-    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(packForSave()));
-    var dlAnchorElem = document.getElementById('downloadAnchorElem');
-    dlAnchorElem.setAttribute("href",     dataStr     );
-    dlAnchorElem.setAttribute("download", game.currentMapName+".json");
-    dlAnchorElem.click();
-}
+
 
 function defaultLoad(){
     if(loadAutosave()){
         console.log('autoseave?');
         if(!game.gameLoopStarted)
-            drawGame();
-        //showOverlay("Turn for Player "+game.currentPlayer);
+            view.drawGame();
+        //showOv:rlay("Turn for Player "+game.currentPlayer);
         //document.getElementById('status').textContent = printPlayer(game.currentPlayerObj);
         return;
     }
     alert('autosave not found, please load a map');
-    loadMap();
+    game.loadMap();
 }
 function loadAutosave(){
     const loaded = localStorage.getItem('autosaveUfeff');
@@ -380,10 +419,12 @@ window.toggleSprites = () => {
 
 function theLoop(dt){
     //console.log('looping', game.doLoop, dt)
-    if(!game.pauseLoop)
+    if(!game.pauseLoop){
+
         game.dt = dt;
         game.doLoop(dt);
-    requestAnimationFrame(theLoop)
+    }
+        requestAnimationFrame(theLoop)
 }
 
 
@@ -537,7 +578,7 @@ view.gameCanvas.addEventListener('click', e => {
                         //drawGame();
                     }
                 } else if (btn.action === 'loadmap') {
-                    loadMap();
+                    game.loadMap();
                 } else if (btn.action === 'newgame') {
                     game.switchMode('charSelect')
                     //drawCharacterSelectScreen();
@@ -623,4 +664,10 @@ window.drawCanvasInput = (ctx, dt) => {
     console.log(charmouseX,charmouseY)
         view.drawDot(ctx, charmouseX,charmouseY,2,'purple');
 }
+function handleCraftClick(e){
 
+    const rect = view.craftCanvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left)/ 10 ;
+    const y = (e.clientY - rect.top)/ 10 ;
+    console.log(x,y,e);
+}

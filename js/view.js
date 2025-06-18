@@ -5,6 +5,8 @@ export default class View{
     editorCtx;
     spriteCanvas = document.getElementById('spriteCanvas');
     spriteCtx = spriteCanvas.getContext('2d');
+    craftCanvas = document.getElementById('craftCanvas');
+    craftCtx = craftCanvas.getContext('2d');
     is_unit = document.getElementById('is_unit');
     is_layer = document.getElementById('is_layer');
     is_clear = document.getElementById('is_clear');
@@ -23,11 +25,25 @@ export default class View{
     editormenu = document.getElementById('editor-controls');
 
     ufeffSprite;
+    craftSprite;
+
+    //craft Sprite settings
+    frameWidth = 200;
+    frameHeight = 250;
+    framesPerRow = 3; // You can count the number of frames in a row
+    rowIndex = 2; // For example: 8th row (choose based on which character to animate)
+    totalFrames = 3
+
+    currentFrame = 0;
+    animationSpeed = 200; // milliseconds between frames
+    old_dt = 0;
+
     constructor(){
         console.log(' View constructed');
     }
     drawEditor(dt) {
 
+        if(!dt) dt = game.dt;
         let is_hide_units_checked = is_hide_units.checked;
         let is_hide_layer_checked = is_hide_layer.checked;
         view.editorCtx.clearRect(0, 0, view.editorCanvas.width, view.editorCanvas.height);
@@ -67,12 +83,24 @@ export default class View{
         }
 
         view.spriteCtx.clearRect(0, 0, spriteCanvas.width, spriteCanvas.height);
-
         view.spriteCtx.drawImage(this.ufeffSprite, 0, 0);
         view.spriteCtx.strokeStyle = 'red';
         view.spriteCtx.lineWidth = 2;
         view.spriteCtx.strokeRect( (game.smouseX * game.cellSize), (game.smouseY * game.cellSize), cellS, cellS);
 
+
+            const w = this.frameWidth/12;//200/12
+            const h = this.frameHeight/12;//250/12
+
+            const dx = (game.cmouseX)*w
+            const dy = (game.cmouseY-17)*w
+        console.log(w,h,dx,dy)
+        view.craftCtx.clearRect(0, 0, craftCanvas.width, craftCanvas.height);
+        //view.craftCtx.drawImage(this.craftSprite, 0, 0);
+        view.craftCtx.strokeStyle = 'red';
+        view.craftCtx.lineWidth = 2;
+        view.craftCtx.strokeRect( dx, dy, w*2.5, h*2.5);
+        view.drawAnimationEdit(dt);
 
         if(!game.gameLoopStarted && game.mode === "editor"){
             game.editorLoopStarted = true;
@@ -82,7 +110,8 @@ export default class View{
     }
 
     drawGame(dt) {
-        //console.log('dt',dt);
+        //console.log('draw game dt',dt, game.dt);
+        if(!dt) dt = game.dt;
         view.gameCtx.clearRect(0, 0, view.gameCanvas.width, view.gameCanvas.height);
         game.update(dt, view.gameCtx);
 
@@ -110,9 +139,9 @@ export default class View{
 
         this.drawGameMenu(this.gameCtx);
         this.drawPlayerMenu(this.gameCtx);
-        //console.log(sayMsgObj)
+        //console.log(game.sayMsgObj, 'in view')
         if(game.sayMsgObj.length) this.sayMsg(game.sayMsgObj[0],game.sayMsgObj[1]);
-
+        this.drawAnimation(dt)
         //view.gameCtx.clearRect(0, 0, view.gameCanvas.width, view.gameCanvas.height);
         //drawGrid(view.gameCtx);
         //drawUnits(view.gameCtx);
@@ -124,7 +153,7 @@ export default class View{
     }
     drawLoadScreen(dt) {
         const ctx = view.gameCtx
-        console.log('drawLoadScreen');
+        //console.log('drawLoadScreen');
         ctx.clearRect(0, 0, view.gameCanvas.width, view.gameCanvas.height);
         ctx.fillStyle = '#111';
         ctx.fillRect(0, 0, view.gameCanvas.width, view.gameCanvas.height);
@@ -361,7 +390,7 @@ export default class View{
             this.drawInventoryGrid(ctx);
         }
     }
-    sayMsg({x, y}, msg, ctx = view.gameCtx) {
+    sayMsg({x, y}, msg, ctx = this.gameCtx) {
         const padding = 4;
         const fontSize = 4;
         const lineHeight = fontSize + 2;
@@ -557,9 +586,9 @@ export default class View{
         });
         drawCanvasInput(ctx, dt);
     }
-///////////editor
-//
- 
+    ///////////editor
+    //
+
     drawLayer(ctx){
         //check if currently drawing selected unit
         for(let i = 0; i < game.gameMapLayer.length; i++){
@@ -617,12 +646,52 @@ export default class View{
 
         //noDraw = false;
     }
- 
+
     printSavedMap(maps){
         let list = `<p onclick="this.parentNode.innerHTML = ''">close</p><p class="d" onclick="this.parentNode.innerHTML=''">&times;</p><br />`;
         for(let i = 0; i<maps.length; i++){
             list += `<p onclick="game.loadMapByName('${maps[i]}')">${maps[i]} </p><p class="d" onclick="deleteMap('${maps[i]}')">del</p><br />`;
         }
         this.map_menu.innerHTML = list;
+    }
+
+    drawAnimation(dt) {
+        //console.log ( dt - old_dt);
+
+        if(dt - this.old_dt > 300){
+            this.old_dt = dt;
+            this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
+        }
+        const sx = (this.currentFrame * this.frameWidth);
+        const sy = (this.rowIndex * this.frameHeight);
+
+        view.gameCtx.drawImage(this.craftSprite, sx, sy, this.frameWidth, this.frameHeight, 100, 100, this.frameWidth/10, this.frameHeight/10);
+
+    }
+    drawAnimationEdit(dt) {
+        //console.log ( dt - this.old_dt);
+
+        if(dt - this.old_dt > 300){
+            this.old_dt = dt;
+            this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
+        }
+        for(let y = 0; y < 3; y++)
+        for(let x = 0; x < 3; x++){
+            const sx = this.currentFrame * this.frameWidth + this.frameWidth * 3  * x;
+            const sy = y * this.frameHeight;
+
+            const w = this.frameWidth/5;
+            const h = this.frameHeight/5;
+
+            const dx = (x)*w
+            const dy = (y)*h
+
+            view.craftCtx.drawImage(this.craftSprite, 
+                sx, sy, this.frameWidth, this.frameHeight, 
+                dx, dy, w ,h
+            );
+
+        }
+
     }
 }
