@@ -31,6 +31,8 @@ export default class View{
     frameWidth = 200;
     frameHeight = 250;
     framesPerRow = 3; // You can count the number of frames in a row
+    framesPerCol = 3;
+    frameScale = 0.2;
     rowIndex = 2; // For example: 8th row (choose based on which character to animate)
     totalFrames = 3
 
@@ -81,6 +83,18 @@ export default class View{
                 game.mouseX * game.cellSize, game.mouseY * game.cellSize, cellS, cellS
             );
         }
+        if(
+            game.frameSelected
+        ){
+            console.log('oooo',game.mouseX, game.mouseY, game.frameSelected);
+            view.editorCtx.drawImage(
+                view.craftSprite,
+                0,0, game.frameWidth, game.frameHeight,
+                //game.frameSelected.x * game.frameWidth * game.totalFrames, game.frameSelected.y * game.frameHeight, game.frameWidth, game.frameHeight,
+                //game.mouseX * game.cellSize, game.mouseY * game.cellSize, cellS*2, cellS*2
+                0, 0 ,game.frameWidth, game.frameHeight
+            );
+        }
 
         view.spriteCtx.clearRect(0, 0, spriteCanvas.width, spriteCanvas.height);
         view.spriteCtx.drawImage(this.ufeffSprite, 0, 0);
@@ -89,17 +103,17 @@ export default class View{
         view.spriteCtx.strokeRect( (game.smouseX * game.cellSize), (game.smouseY * game.cellSize), cellS, cellS);
 
 
-            const w = this.frameWidth/12;//200/12
-            const h = this.frameHeight/12;//250/12
+            const w = this.frameWidth*view.frameScale // view.framesPerRow;//200/12
+            const h = this.frameHeight*view.frameScale // view.framesPerCol;//250/12
 
-            const dx = (game.cmouseX)*w
-            const dy = (game.cmouseY-17)*w
+            const dx = (game.cmouseX)* w /2.5
+            const dy = (game.cmouseY-25)*w/2.5
         console.log(w,h,dx,dy)
         view.craftCtx.clearRect(0, 0, craftCanvas.width, craftCanvas.height);
         //view.craftCtx.drawImage(this.craftSprite, 0, 0);
         view.craftCtx.strokeStyle = 'red';
         view.craftCtx.lineWidth = 2;
-        view.craftCtx.strokeRect( dx, dy, w*2.5, h*2.5);
+        view.craftCtx.strokeRect( dx, dy, w, h);
         view.drawAnimationEdit(dt);
 
         if(!game.gameLoopStarted && game.mode === "editor"){
@@ -141,7 +155,7 @@ export default class View{
         this.drawPlayerMenu(this.gameCtx);
         //console.log(game.sayMsgObj, 'in view')
         if(game.sayMsgObj.length) this.sayMsg(game.sayMsgObj[0],game.sayMsgObj[1]);
-        this.drawAnimation(dt)
+        this.drawAnimation(this.gameCtx, dt)
         //view.gameCtx.clearRect(0, 0, view.gameCanvas.width, view.gameCanvas.height);
         //drawGrid(view.gameCtx);
         //drawUnits(view.gameCtx);
@@ -655,7 +669,7 @@ export default class View{
         this.map_menu.innerHTML = list;
     }
 
-    drawAnimation(dt) {
+    drawAnimation(ctx , dt) {
         //console.log ( dt - old_dt);
 
         if(dt - this.old_dt > 300){
@@ -665,7 +679,7 @@ export default class View{
         const sx = (this.currentFrame * this.frameWidth);
         const sy = (this.rowIndex * this.frameHeight);
 
-        view.gameCtx.drawImage(this.craftSprite, sx, sy, this.frameWidth, this.frameHeight, 100, 100, this.frameWidth/10, this.frameHeight/10);
+        ctx.drawImage(this.craftSprite, sx, sy, this.frameWidth, this.frameHeight, 100, 100, this.frameWidth/10, this.frameHeight/10);
 
     }
     drawAnimationEdit(dt) {
@@ -675,13 +689,13 @@ export default class View{
             this.old_dt = dt;
             this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
         }
-        for(let y = 0; y < 3; y++)
-        for(let x = 0; x < 3; x++){
-            const sx = this.currentFrame * this.frameWidth + this.frameWidth * 3  * x;
+        for(let y = 0; y < view.framesPerCol; y++)
+        for(let x = 0; x < view.framesPerRow; x++){
+            const sx = this.currentFrame * this.frameWidth + this.frameWidth * this.totalFrames  * x;
             const sy = y * this.frameHeight;
 
-            const w = this.frameWidth/5;
-            const h = this.frameHeight/5;
+            const w = parseInt(this.frameWidth*this.frameScale);
+            const h = parseInt(this.frameHeight*this.frameScale);
 
             const dx = (x)*w
             const dy = (y)*h
@@ -690,6 +704,19 @@ export default class View{
                 sx, sy, this.frameWidth, this.frameHeight, 
                 dx, dy, w ,h
             );
+            //console.log('ee dx dy',dx,dy,' cmx cmy ',game.cmouseX*20, (game.cmouseY-25)*10)
+            if(
+
+                game.cmouseX * 18> dx &&
+                game.cmouseX * 18 < dx + w &&
+                (game.cmouseY-25) * 18 > dy &&
+                (game.cmouseY-25) * 18 < dy + h 
+
+            ){
+            view.craftCtx.strokeStyle = 'green';
+                view.craftCtx.strokeRect(dx, dy, w ,h);
+                game.frameHover = { x , y };
+            }
 
         }
 

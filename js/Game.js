@@ -54,6 +54,8 @@ export default class Game{
     smouseY = 0;
     cmouseX = 0; 
     cmouseY = 0;
+    frameSelected = false;
+    frameHover = {};
     hoverx = 0; 
     hovery = 0;
 

@@ -275,8 +275,11 @@ function goInit(){
             autosave();
         });
 
-        spriteCanvas.width *=game.gameScale;
-        spriteCanvas.height *=game.gameScale;
+        view.craftCanvas.width = view.frameWidth * view.framesPerRow * view.frameScale;
+        view.craftCanvas.height = view.frameHeight * view.framesPerCol * view.frameScale;
+
+        view.spriteCanvas.width *=game.gameScale;
+        view.spriteCanvas.height *=game.gameScale;
         view.spriteCtx.scale(game.gameScale, game.gameScale)
 
         view.gameCanvas.width =window.innerWidth-50;// game.gridSize * game.cellSize;
@@ -401,20 +404,26 @@ function autosave(){
 window.toggleMenu = () => {
     if(menu.style.display === 'none')
         menu.style.display = 'inline-block';
-        else
+    else
         menu.style.display = 'none';
 }
 window.toggleControls = () => {
     if(editormenu.style.display === 'none')
         editormenu.style.display = 'inline-block';
-        else
+    else
         editormenu.style.display = 'none';
 }
 window.toggleSprites = () => {
     if(spriteCanvas.style.display === 'none')
         spriteCanvas.style.display = 'inline-block';
-        else
+    else
         spriteCanvas.style.display = 'none';
+}
+window.toggleCraft = () => {
+    if(craftCanvas.style.display === 'none')
+        craftCanvas.style.display = 'inline-block';
+    else
+        craftCanvas.style.display = 'none';
 }
 
 function theLoop(dt){
@@ -670,4 +679,5 @@ function handleCraftClick(e){
     const x = (e.clientX - rect.left)/ 10 ;
     const y = (e.clientY - rect.top)/ 10 ;
     console.log(x,y,e);
+    game.frameSelected = game.frameHover;
 }

@@ -190,6 +190,17 @@
 
             top: 40px;
         }
+        button.show_craft{
+            position: fixed
+                ;
+            top: 0;
+            right:0;
+            z-index:1;
+        }
+        button.show_craft{
+
+            top: 80px;
+        }
         textarea{
             width:100%;
             height: 50px;
@@ -224,6 +235,7 @@
         <div id="editor-container">
             <button class="show" onclick="toggleControls()">menu</button>
             <button class="show_sprites" onclick="toggleSprites()">sprites</button>
+            <button class="show_craft" onclick="toggleCraft()">craft</button>
             <div id="editor-controls">
                 <input type="text" id="map_name" name="map_name" onchange="game.currentMapName=this.value" placeholder="Map name" /><br />
                 <button onclick="game.saveMap()">Save Map</button>
